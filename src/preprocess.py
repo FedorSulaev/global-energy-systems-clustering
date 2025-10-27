@@ -10,7 +10,8 @@ Steps:
 4. Pivot to country-feature matrix.
 5. Handle missing values.
 6. Apply variance and correlation-based feature selection.
-7. Save processed dataset for downstream clustering.
+7. Apply log + standard scaling (configurable).
+8. Save processed dataset for downstream clustering.
 
 Author: Fedor Sulaev
 Date: October 2025
@@ -21,6 +22,10 @@ import numpy as np
 import yaml
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.preprocessing import StandardScaler
+
+# --------------------------------------------------
+# Utility functions
+# --------------------------------------------------
 
 def load_config(path="config/preprocessing_config.yaml"):
     """Load YAML configuration file."""
@@ -66,11 +71,31 @@ def feature_selection(df: pd.DataFrame, var_thresh: float, corr_thresh: float) -
     print(f"Final selected features: {list(df_final.columns)}")
     return df_final
 
-def scale_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Standardize features."""
+# --------------------------------------------------
+# New: Log + Standard Scaling
+# --------------------------------------------------
+
+def scale_features(df: pd.DataFrame, use_log_scaling: bool = True) -> pd.DataFrame:
+    """
+    Apply scaling to features.
+    If use_log_scaling=True, applies log(1 + x) before StandardScaler.
+    """
+    epsilon = 1e-6  # small constant to avoid log(0)
+    if use_log_scaling:
+        print("Applying log + standard scaling (LogScaler)...")
+        df_transformed = np.log1p(df + epsilon)
+    else:
+        print("Applying standard scaling only...")
+        df_transformed = df.copy()
+
     scaler = StandardScaler()
-    scaled = scaler.fit_transform(df)
-    return pd.DataFrame(scaled, columns=df.columns, index=df.index)
+    scaled = scaler.fit_transform(df_transformed)
+    scaled_df = pd.DataFrame(scaled, columns=df.columns, index=df.index)
+    return scaled_df
+
+# --------------------------------------------------
+# Pipeline Execution
+# --------------------------------------------------
 
 def run_pipeline(config_path="config/preprocessing_config.yaml"):
     """Main pipeline execution."""
@@ -87,9 +112,13 @@ def run_pipeline(config_path="config/preprocessing_config.yaml"):
         corr_thresh=cfg["thresholds"]["correlation"]
     )
 
-    df_scaled = scale_features(df_selected)
+    df_scaled = scale_features(
+        df_selected,
+        use_log_scaling=cfg["processing"].get("use_log_scaling", True)
+    )
+
     df_scaled.to_csv(cfg["data"]["output_path"])
-    print(f"✅ Preprocessing complete. Saved to {cfg['data']['output_path']}")
+    print(f"✅ Preprocessing complete. Saved to {cfg['data']['output_path']} ({df_scaled.shape})")
 
 if __name__ == "__main__":
     run_pipeline()

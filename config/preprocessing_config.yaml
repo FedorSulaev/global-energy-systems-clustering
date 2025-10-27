@@ -2,25 +2,11 @@ data:
   input_path: "data/raw/global_electricity_production_data.csv"
   output_path: "data/processed/electricity_clean_2023.csv"
 
-columns:
-  date: "date"
-  country: "country_name"
-  product: "product"
-  value: "value"
-
 processing:
-  dropna_columns: ["date"]
-  year_col: "year"
-  month_col: "month"
-  aggregate_by: "year"
   latest_year: 2023
-  index_col: "country_name"
-  pivot_values: "value"
-  pivot_columns: "product"
-  pivot_index: "country_name"
+  use_log_scaling: true
 
 thresholds:
   variance: 0.01
   correlation: 0.9
 
-random_state: 42
