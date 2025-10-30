@@ -8,5 +8,5 @@ processing:
 
 thresholds:
   variance: 0.01
-  correlation: 0.9
+  correlation: 0.8
 

@@ -65,6 +65,7 @@ def feature_selection(df: pd.DataFrame, var_thresh: float, corr_thresh: float) -
     corr_matrix = df_filtered.corr().abs()
     upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
     to_drop = [col for col in upper.columns if any(upper[col] > corr_thresh)]
+    to_drop.append("Electricity")
     df_final = df_filtered.drop(columns=to_drop)
 
     print(f"Removed due to high correlation: {to_drop}")
